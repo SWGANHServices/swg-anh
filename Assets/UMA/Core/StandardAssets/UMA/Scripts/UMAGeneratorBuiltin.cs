@@ -17,7 +17,6 @@ namespace UMA
 		private LinkedList<UMAData> cleanUmas = new LinkedList<UMAData>();
 		private LinkedList<UMAData> dirtyUmas = new LinkedList<UMAData>();
 		private UMAGeneratorCoroutine activeGeneratorCoroutine;
-		public Transform textureMergePrefab;
 		public UMAMeshCombiner meshCombiner;
 
         /// <summary>
@@ -26,11 +25,18 @@ namespace UMA
         [Tooltip("Increase scale factor to decrease texture usage. A value of 1 means the textures will not be downsampled. Values greater than 1 will result in texture savings. The size of the texture is divided by this value.")]
         public int InitialScaleFactor = 1;
 
+		[Tooltip("Number of iterations to process each frame")]
+		public int IterationCount = 1;
+
 		/// <summary>
 		/// If true, generate in a single update.
 		/// </summary>
         [Tooltip("Set Fast Generation to true to have the UMA Avatar generated in a single update. Otherwise, generation can span multiple frames.")]
 		public bool fastGeneration = true;
+
+		[Tooltip("Enable Process All Pending to force the generate to process all pending UMA during the next frame")]
+		public bool processAllPending = false;
+
 		private int forceGarbageCollect;
         /// <summary>
         /// Number of character updates before triggering System garbage collect.
@@ -65,10 +71,8 @@ namespace UMA
 
 			if (!textureMerge)
 			{
-				Transform tempTextureMerger = Instantiate(textureMergePrefab, Vector3.zero, Quaternion.identity) as Transform;
-				textureMerge = tempTextureMerger.GetComponent("TextureMerge") as TextureMerge;
-				textureMerge.transform.parent = transform;
-				textureMerge.gameObject.SetActive(false);
+				if (Debug.isDebugBuild)
+					Debug.LogError("No TextureMerge set!");
 			}
 
 			//Garbage Collection hack
@@ -81,7 +85,7 @@ namespace UMA
 			}
 		}
 
-		void Update()
+		public virtual void Update()
 		{
 			if (CheckRenderTextures())
 				return; // if render textures needs rebuild we'll not do anything else
@@ -129,7 +133,22 @@ namespace UMA
 			{
 				stopWatch.Reset();
 				stopWatch.Start();
-				OnDirtyUpdate();
+				int count = IterationCount;
+
+				// If processAllPending is set, process as many are in the queue right now.
+				// We get the count (and multiply by two for slow gen) in case bad events add more items to the queue.
+				if (processAllPending)
+				{
+					count = umaDirtyList.Count;
+					if (!fastGeneration) count *= 2;
+				}
+
+				for (int i = 0; i < count; i++)
+				{
+					OnDirtyUpdate();
+					if (IsIdle())
+						break;
+				}
 				ElapsedTicks += stopWatch.ElapsedTicks;
 #if UNITY_EDITOR
 				UnityEditor.EditorUtility.SetDirty(this);
@@ -194,9 +213,9 @@ namespace UMA
 					meshCombiner.Preprocess(umaData);
 				}
 				umaData.FireCharacterBegunEvents();
+				PreApply(umaData);
 			}
 
-			PreApply(umaData);
 
 			if (umaData.isTextureDirty)
 			{
@@ -261,12 +280,6 @@ namespace UMA
 
 		public virtual void OnDirtyUpdate()
 		{
-			//var DirtyStopwatch = new System.Diagnostics.Stopwatch();
-			//DirtyStopwatch.Start();
-			//var charName = "";
-			//if (umaDirtyList[0] != null)
-			//	charName = umaDirtyList[0].gameObject.name;
-
 			try
 			{
 				if (HandleDirtyUpdate(umaDirtyList[0]))
@@ -285,7 +298,7 @@ namespace UMA
 			catch (Exception ex)
 			{
 				if (Debug.isDebugBuild)
-					UnityEngine.Debug.LogWarning("Exception in UMAGeneratorBuiltin.OnDirtyUpdate: " + ex);
+					UnityEngine.Debug.LogException(ex);
 			}
 			//anything more than 166,000 is too long (166,000 is 1 frame @ 60fps)
 			//the demo alien is about 65,000 on average- this is a big chunk of the available time though and my machine is fast

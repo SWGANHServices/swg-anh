@@ -315,7 +315,11 @@ namespace UMA
 		private static UMAMeshData bufferLockOwner = null;
 		private static bool buffersInitialized = false;
 		private static bool haveBackingArrays = false;
+#if UMA_32BITBUFFERS
+		const int MAX_VERTEX_COUNT = 262144;
+#else
 		const int MAX_VERTEX_COUNT = 65534;
+#endif
 		static List<Vector3> gVertices = new List<Vector3>(MAX_VERTEX_COUNT);
 		static Vector3[] gVerticesArray;
 		static List<Vector3> gNormals = new List<Vector3>(MAX_VERTEX_COUNT);
@@ -549,7 +553,7 @@ namespace UMA
 			}
 
 			//Create the blendshape data on the slot asset from the unity mesh
-			#region Blendshape
+#region Blendshape
 			blendShapes = new UMABlendShape[sharedMesh.blendShapeCount];
 
 			Vector3[] deltaVertices;
@@ -593,7 +597,7 @@ namespace UMA
 
 				}
 			}
-			#endregion
+#endregion
 		}
 
 		/// <summary>
@@ -686,6 +690,13 @@ namespace UMA
 		/// <param name="skeleton">Skeleton.</param>
 		public void ApplyDataToUnityMesh(SkinnedMeshRenderer renderer, UMASkeleton skeleton)
 		{
+			if(renderer == null)
+			{
+				if (Debug.isDebugBuild)
+					Debug.LogError("Renderer is null!");
+				return;
+			}
+
 			CreateTransforms(skeleton);
 
 			Mesh mesh = renderer.sharedMesh;
@@ -751,7 +762,7 @@ namespace UMA
 			}
 
 			//Apply the blendshape data from the slot asset back to the combined UMA unity mesh.
-			#region Blendshape
+#region Blendshape
 			mesh.ClearBlendShapes();
 			if (blendShapes != null && blendShapes.Length > 0 ) 
 			{
@@ -784,7 +795,7 @@ namespace UMA
 					}
 				}
 			}
-			#endregion
+#endregion
 
 			mesh.RecalculateBounds();
 			renderer.bones = bones != null ? bones : skeleton.HashesToTransforms(boneNameHashes);
@@ -937,7 +948,7 @@ namespace UMA
 			}
 		}
 
-		#region operator ==, != and similar HACKS, seriously.....
+#region operator ==, != and similar HACKS, seriously.....
 		public static implicit operator bool(UMAMeshData obj)
 		{
 			return ((System.Object)obj) != null && obj.vertexCount != 0;
@@ -981,7 +992,7 @@ namespace UMA
 		{
 			return base.GetHashCode();
 		}
-		#endregion
+#endregion
 
 		internal void ReSortUMABones()
 		{
@@ -1049,19 +1060,19 @@ namespace UMA
 			if (uv2 != null)
 			{
 				newMeshData.uv2 = new Vector2[uv2.Length];
-				Array.Copy(uv2, newMeshData.uv, uv2.Length);
+				Array.Copy(uv2, newMeshData.uv2, uv2.Length);
 			}
 
 			if (uv3 != null)
 			{
 				newMeshData.uv3 = new Vector2[uv3.Length];
-				Array.Copy(uv3, newMeshData.uv, uv3.Length);
+				Array.Copy(uv3, newMeshData.uv3, uv3.Length);
 			}
 
 			if (uv4 != null)
 			{
 				newMeshData.uv4 = new Vector2[uv4.Length];
-				Array.Copy(uv4, newMeshData.uv, uv4.Length);
+				Array.Copy(uv4, newMeshData.uv4, uv4.Length);
 			}
 
 			if(blendShapes != null)

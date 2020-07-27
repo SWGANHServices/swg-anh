@@ -27,9 +27,9 @@ namespace UMA
 		{
 			float u1 = Random.value;
 			float u2 = Random.value;
-			
+
 			float rand_std_normal = Mathf.Sqrt(-2.0f * Mathf.Log(u1)) * Mathf.Sin(2.0f * Mathf.PI * u2);
-			
+
 			return mean + dev * rand_std_normal;
 		}
 
@@ -65,6 +65,27 @@ namespace UMA
 			}
 
 			return 0;
+		}
+
+		/// <summary>
+		/// Returns the first found asset.
+		/// </summary>
+		/// <param name="searchName"></param>
+		/// <returns></returns>
+		public static Texture LoadTextureAsset(string searchName)
+		{
+			string search = "t:texture " + searchName;
+			string[] assets = UnityEditor.AssetDatabase.FindAssets(search);
+			if (assets != null && assets.Length > 0)
+			{
+				return UnityEditor.AssetDatabase.LoadAssetAtPath<Texture>(UnityEditor.AssetDatabase.GUIDToAssetPath(assets[0]));
+			}
+			else
+			{
+				if (Debug.isDebugBuild)
+					Debug.LogWarning("Could not load " + searchName);
+			}
+			return null;
 		}
 #endif
 
@@ -116,9 +137,42 @@ namespace UMA
 			return "";
 		}
 
-		public static void DestroySceneObject(UnityEngine.Object obj)
+		public static void DestroyAvatar(Avatar obj)
+		{
+			if (obj == null)
+				return;
+			int DestroyInstance = obj.GetInstanceID();
+			if (obj is Avatar && !UMAGeneratorBase.CreatedAvatars.Contains(DestroyInstance))
+			{
+				return;
+			}
+
+			UMAGeneratorBase.CreatedAvatars.Remove(DestroyInstance);
+
+#if UNITY_EDITOR
+			if (Application.isPlaying)
+			{
+				UnityEngine.Object.Destroy(obj);
+			}
+			else
+			{
+				UnityEngine.Object.DestroyImmediate(obj, false);
+			}
+#else
+			UnityEngine.Object.Destroy(obj);
+#endif
+		}
+
+	public static void DestroySceneObject(UnityEngine.Object obj)
 		{
 #if UNITY_EDITOR
+			int DestroyInstance = obj.GetInstanceID();
+			if (obj is Avatar && !UMAGeneratorBase.CreatedAvatars.Contains(DestroyInstance))
+			{
+				return;	
+			}
+
+
 			if (Application.isPlaying)
 			{
 				UnityEngine.Object.Destroy(obj);

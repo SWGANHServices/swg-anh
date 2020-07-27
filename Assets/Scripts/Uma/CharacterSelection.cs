@@ -33,15 +33,15 @@ public class CharacterSelection : MonoBehaviour
     void Start()
     {
        
-        ClientManager.CharacterSelection();
+        //ClientManager.CharacterSelection();
          
-        var Characters = ClientManager.CharacterSelection().Characters;
-        foreach(var chars in Characters)
+        //var Characters = ClientManager.CharacterSelection().Characters;
+       //foreach(var chars in Characters)
         {
             //    CharButton.text = chars.CharName;
 
-            var charname = chars.CharName;
-            var umdata = chars.UmaData;
+           // var charname = chars.CharName;
+           // var umdata = chars.UmaData;
 
             GameObject button = (GameObject)Instantiate(buttonPrefab);
             button.transform.SetParent(panelToAttachButtonsTo.transform);//Setting button parent
@@ -52,13 +52,13 @@ public class CharacterSelection : MonoBehaviour
             //    //   characterAvatar.LoadFromRecipeString(chars.UmaData.ToString());
             //    characterAvatar.LoadColorsFromRecipeString(umdata);
             //    //  characterAvatar.ImportSettings(UMATextRecipe.PackedLoadDCS(characterAvatar.context, umdata));
-             characterAvatar.LoadFromRecipeString(umdata, DynamicCharacterAvatar.LoadOptions.useDefaults);
+            // characterAvatar.LoadFromRecipeString(umdata, DynamicCharacterAvatar.LoadOptions.useDefaults);
             characterAvatar.BuildCharacter();
 
 
         });//Setting what button does when clicked
                                                                        //Next line assumes button has child with text as first gameobject like button created from GameObject->UI->Button
-            button.transform.GetChild(0).GetComponent<Text>().text = charname;//Changing text
+           // button.transform.GetChild(0).GetComponent<Text>().text = charname;//Changing text
         }
         characterAvatar.CharacterUpdated.AddListener(OnCharacterUpdated);
         characterAvatar.CharacterCreated.AddListener(OnCharacterCreated);

@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 #endif
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
 namespace UMA
 {
@@ -49,6 +50,7 @@ namespace UMA
 		private MeshCollider _meshCollider;
 		//Use 0 for unselected and 1 for selected
 		private Material[] _Materials;
+		private Shader _Shader;
 
 #if UNITY_EDITOR
 		public struct SceneInfo
@@ -106,17 +108,27 @@ namespace UMA
                 _meshCollider.hideFlags = HideFlags.HideInInspector;
             }
 
-            if (_Materials == null)
+            if( GraphicsSettings.renderPipelineAsset == null )
+            {
+                _Shader = Shader.Find("Standard");
+            }
+            else
+            {
+                //Expand this to find shaders that work with other SRPs in the future.
+                _Shader = Shader.Find("Unlit/Color");
+            }
+
+            if (_Materials == null && _Shader != null)
             {
                 _Materials = new Material[2];
 
                 //Selected
-                _Materials[1] = new Material(Shader.Find("Standard"));
+                _Materials[1] = new Material(_Shader);
                 _Materials[1].name = "Selected";
                 _Materials[1].color = Color.red;
 
                 //UnSelected
-                _Materials[0] = new Material(Shader.Find("Standard"));
+                _Materials[0] = new Material(_Shader);
                 _Materials[0].name = "UnSelected";
                 _Materials[0].color = Color.gray;
 
@@ -139,6 +151,9 @@ namespace UMA
             }
 
             _sharedMesh = new Mesh();
+#if UMA_32BITBUFFERS
+				_sharedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#endif
             _sharedMesh.subMeshCount = meshData.subMeshCount;
             _sharedMesh.vertices = meshData.vertices;
             _sharedMesh.normals = meshData.normals;
@@ -300,7 +315,12 @@ namespace UMA
                 return;;
 
             if (_occlusionMesh == null)
+            {
                 _occlusionMesh = new Mesh();
+#if UMA_32BITBUFFERS
+				_occlusionMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#endif
+            }
             else
                 _occlusionMesh.Clear();
             

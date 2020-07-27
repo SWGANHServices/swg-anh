@@ -5,20 +5,20 @@ using UMA;
 using UMA.CharacterSystem;
 using UnityEngine;
 using UnityEngine.UI;
-using YukiNet.Client;
+
 
 public class CharacterCreator : MonoBehaviour
 {
-    private readonly ClientConnectionDispatcher connectionDispatcher;
+    // private readonly ClientConnectionDispatcher connectionDispatcher;
     private readonly ClientManager ClientManager;
 
     private DynamicCharacterAvatar characterAvatar;
     private Dictionary<string, DnaSetter> DNA;
 
-    public List<string> hairMaleModels = new List<string>();
+    public List<string> maleHairModels = new List<string>();
     private int CurrentMaleHair;
 
-    public List<string> hairFemaleModels = new List<string>();
+    public List<string> femaleHairModels = new List<string>();
     private int CurrentFemaleHair;
 
     [SerializeField]
@@ -44,15 +44,7 @@ public class CharacterCreator : MonoBehaviour
         MuscleSlider.onValueChanged.AddListener(OnMuscleChange);
     }
 
-    private void OnCharacterCreated(UMAData data)
-    {
-        DNA = characterAvatar.GetDNA();
-    }
 
-    private void OnCharacterUpdated(UMAData data)
-    {
-        DNA = characterAvatar.GetDNA();
-    }
 
     private void OnHeightChange(float height)
     {
@@ -86,11 +78,11 @@ public class CharacterCreator : MonoBehaviour
     //    }
     //    characterAvatar.BuildCharacter();
     //}
-    public void ChangeHair(bool plus)
+    public void ChangeHair(bool hair)
     {
         if (characterAvatar.activeRace.name == "HumanMaleDCS")
         {
-            if (plus)
+            if (hair)
             {
                 CurrentMaleHair++;
             }
@@ -98,20 +90,20 @@ public class CharacterCreator : MonoBehaviour
             {
                 CurrentMaleHair--;
             }
-            CurrentMaleHair = Mathf.Clamp(CurrentMaleHair, 0, hairMaleModels.Count - 1);
-            if (hairMaleModels[CurrentMaleHair] == "None")
+            CurrentMaleHair = Mathf.Clamp(CurrentMaleHair, 0, maleHairModels.Count - 1);
+            if (maleHairModels[CurrentMaleHair] == "None")
             {
                 characterAvatar.ClearSlot("Hair");
             }
             else
             {
-                characterAvatar.SetSlot("Hair", hairMaleModels[CurrentMaleHair]);
+                characterAvatar.SetSlot("Hair", maleHairModels[CurrentMaleHair]);
             }
         }
-        if (characterAvatar.activeRace.name == "HumanFemnetaleDCS")
+        if (characterAvatar.activeRace.name == "HumanFemaleDCS")
         {
             //Female Hair
-            if (plus)
+            if (hair)
             {
                 CurrentFemaleHair++;
             }
@@ -119,18 +111,40 @@ public class CharacterCreator : MonoBehaviour
             {
                 CurrentFemaleHair--;
             }
-            CurrentFemaleHair = Mathf.Clamp(CurrentFemaleHair, 0, hairFemaleModels.Count - 1);
+            CurrentFemaleHair = Mathf.Clamp(CurrentFemaleHair, 0, femaleHairModels.Count - 1);
 
-            if (hairFemaleModels[CurrentFemaleHair] == "None")
+            if (femaleHairModels[CurrentFemaleHair] == "None")
             {
                 characterAvatar.ClearSlot("Hair");
             }
             else
             {
-                characterAvatar.SetSlot("Hair", hairFemaleModels[CurrentFemaleHair]);
+                characterAvatar.SetSlot("Hair", femaleHairModels[CurrentFemaleHair]);
             }
         }
         characterAvatar.BuildCharacter();
+    }
+
+    public void SwitchGender(bool gender)
+    {
+        if (gender && characterAvatar.activeRace.name != "HumanMaleDCS")
+        {
+            characterAvatar.ChangeRace("HumanMaleDCS");
+        }
+        if (!gender && characterAvatar.activeRace.name != "HumanFemaleDCS")
+        {
+            characterAvatar.ChangeRace("HumanFemaleDCS");
+        }
+    }
+
+    private void OnCharacterCreated(UMAData data)
+    {
+        DNA = characterAvatar.GetDNA();
+    }
+
+    private void OnCharacterUpdated(UMAData data)
+    {
+        DNA = characterAvatar.GetDNA();
     }
 
     private void OnDisable()
@@ -142,30 +156,20 @@ public class CharacterCreator : MonoBehaviour
         MuscleSlider.onValueChanged.RemoveListener(OnMuscleChange);
     }
 
-    public void ChangeSkinColor(Color SkinColor)
+    public void SwitchSkinColor(Color SkinColor)
     {
         characterAvatar.SetColor("Skin", SkinColor);
         characterAvatar.UpdateColors(true);
         Debug.Log(characterAvatar.GetColor("Skin").color);
     }
 
-    public void SwitchGender(bool male)
-    {
-        if (male && characterAvatar.activeRace.name != "HumanMaleDCS")
-        {
-            characterAvatar.ChangeRace("HumanMaleDCS");
-        }
-        if (!male && characterAvatar.activeRace.name != "HumanFemaleDCS")
-        {
-            characterAvatar.ChangeRace("HumanFemaleDCS");
-        }
-    }
+
 
     public void SaveCharacters()
     {
         string UmaRecipeData = characterAvatar.GetCurrentRecipe(true); //PlayerPrefs.GetString("CharacterData");
         string CharacterName = CharacterNameInput.text;
-        ClientManager.SaveCharacter(UmaRecipeData, CharacterName);
+       // ClientManager.SaveCharacter(UmaRecipeData, CharacterName);
 
     }
 }
